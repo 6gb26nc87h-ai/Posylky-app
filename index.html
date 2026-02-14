@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Облік посилок по рейсах</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body { font-family: Arial; padding:15px; background:#f2f2f2; }
+input, select, button { width:100%; padding:10px; margin:5px 0; font-size:16px; }
+button { background:#007aff; color:white; border:none; border-radius:8px; cursor:pointer; }
+button.red { background:red; font-size:14px; padding:5px 10px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+th, td { border:1px solid #ccc; padding:5px; text-align:left; }
+th { background:#ddd; }
+.total { font-size:16px; font-weight:bold; margin-top:5px; }
+h2 { margin-top:20px; }
+.trip-section { margin-bottom:40px; padding:10px; background:#fff; border-radius:8px; }
+.export-buttons { margin-top:5px; display:flex; gap:10px; flex-wrap:wrap; }
+.export-buttons button { width:auto; padding:5px 10px; font-size:14px; }
+.delete-btn { background:red; font-size:12px; padding:3px 6px; }
+</style>
+</head>
+<body>
+
+<h2>Створити новий рейс</h2>
+<input id="newTrip" placeholder="Назва рейсу">
+<button onclick="addTrip()">Створити рейс</button>
+
+<h2>Додати посилку</h2>
+<select id="tripSelect"></select>
+
+<input id="parcelNumber" placeholder="Номер посилки">
+<input id="phone" placeholder="Телефон" oninput="autoFillClient()">
+<input id="city" placeholder="Місто">
+<input id="fullName" placeholder="Прізвище Ім'я">
+<input id="np" placeholder="Відділення Нової Пошти">
+<input id="places" placeholder="Кількість місць">
+<input id="weight" placeholder="Вага">
+<input id="price" placeholder="Ціна">
+<input id="note" placeholder="Примітка">
+
+<button onclick="addParcel()">Додати посилку</button>
+
+<div id="tripsContainer"></div>
+
+<button onclick="clearAll()" class="red">Очистити все</button>
+
+<script>
+// Дані
+let trips = JSON.parse(localStorage.getItem("trips")) || [];
+let parcels = JSON.parse(localStorage.getItem("parcels")) || [];
+let clients = JSON.parse(localStorage.getItem("clients")) || {};
+
+function saveData() {
+    localStorage.setItem("trips", JSON.stringify(trips));
+    localStorage.setItem("parcels", JSON.stringify(parcels));
+    localStorage.setItem("clients", JSON.stringify(clients));
+}
+
+function addTrip() {
+    const name = document.getElementById('newTrip').value.trim();
+    if(!name) return alert("Введіть назву рейсу");
+    if(!trips.includes(name)) trips.push(name);
+    document.getElementById('newTrip').value='';
+    saveData();
+    renderTripSelect();
+    renderTripsTables();
+}
+
+function renderTripSelect() {
+    const select = document.getElementById('tripSelect');
+    select.innerHTML = trips.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+renderTripSelect();
+
+function addParcel() {
+    const trip = document.getElementById('tripSelect').value;
+    if(!trip) return alert("Створіть рейс!");
+
+    const parcel = {
+        id: Date.now(),
+        trip,
+        number: parcelNumber.value,
+        phone: phone.value,
+        city: city.value,
+        name: fullName.value,
+        np: np.value,
+        places: places.value,
+        weight: weight.value,
+        price: price.value,
+        note: note.value
+    };
+
+    if(parcel.phone) {
+        clients[parcel.phone] = { city: parcel.city, name: parcel.name, np: parcel.np };
+    }
+
+    parcels.push(parcel);
+    saveData();
+    renderTripsTables();
+
+    parcelNumber.value=''; phone.value=''; city.value=''; fullName.value=''; np.value='';
+    places.value=''; weight.value=''; price.value=''; note.value='';
+    document.getElementById('parcelNumber').focus();
+}
+
+function autoFillClient() {
+    const phoneValue = phone.value;
+    if(clients[phoneValue]) {
+        city.value = clients[phoneValue].city || '';
+        fullName.value = clients[phoneValue].name || '';
+        np.value = clients[phoneValue].np || '';
+    }
+}
+
+function renderTripsTables() {
+    const container = document.getElementById('tripsContainer');
+    container.innerHTML = '';
+
+    trips.forEach(tripName=>{
+        const tripParcels = parcels.filter(p=>p.trip===tripName);
+        if(tripParcels.length===0) return;
+
+        let section = document.createElement('div');
+        section.className='trip-section';
+
+        let title = document.createElement('h3');
+        title.innerText=`Рейс: ${tripName}`;
+        section.appendChild(title);
+
+        let table = document.createElement('table');
+        let thead = document.createElement('thead');
+        thead.innerHTML=`<tr>
+            <th>№</th>
+            <th>Телефон</th>
+            <th>Місто</th>
+            <th>ПІБ</th>
+            <th>Відділення</th>
+            <th>Місця</th>
+            <th>Вага</th>
+            <th>Ціна</th>
+            <th>Примітка</th>
+            <th>Дії</th>
+        </tr>`;
+        table.appendChild(thead);
+
+        let tbody = document.createElement('tbody');
+        tripParcels.forEach(p=>{
+            let tr=document.createElement('tr');
+            tr.innerHTML=`<td>${p.number}</td>
+                          <td>${p.phone}</td>
+                          <td>${p.city}</td>
+                          <td>${p.name}</td>
+                          <td>${p.np}</td>
+                          <td>${p.places}</td>
+                          <td>${p.weight}</td>
+                          <td>${p.price}</td>
+                          <td>${p.note}</td>
+                          <td><button class="delete-btn" onclick="deleteParcel(${p.id})">Видалити</button></td>`;
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        section.appendChild(table);
+
+        let total = tripParcels.reduce((sum,p)=>sum+(parseFloat(p.price)||0),0);
+        let totalDiv = document.createElement('div');
+        totalDiv.className='total';
+        totalDiv.innerText=`Сума рейсу: ${total.toFixed(2)} грн`;
+        section.appendChild(totalDiv);
+
+        let exportDiv=document.createElement('div');
+        exportDiv.className='export-buttons';
+        exportDiv.innerHTML=`<button onclick="exportExcelTrip('${tripName}')">Експорт Excel</button>
+                             <button onclick="exportPDFTrip('${tripName}')">Експорт PDF</button>
+                             <button class="red" onclick="deleteTrip('${tripName}')">Видалити рейс</button>`;
+        section.appendChild(exportDiv);
+
+        container.appendChild(section);
+    });
+}
+
+function deleteParcel(id){
+    if(confirm("Видалити цю посилку?")){
+        parcels = parcels.filter(p=>p.id!==id);
+        saveData();
+        renderTripsTables();
+    }
+}
+
+function deleteTrip(tripName){
+    if(confirm("Видалити весь рейс разом з посилками?")){
+        parcels = parcels.filter(p=>p.trip!==tripName);
+        trips = trips.filter(t=>t!==tripName);
+        saveData();
+        renderTripSelect();
+        renderTripsTables();
+    }
+}
+
+// Експорт рейсу Excel з українськими заголовками та автошириною
+function exportExcelTrip(tripName){
+    const headersMap = {
+        number: "№",
+        phone: "Телефон",
+        city: "Місто",
+        name: "ПІБ",
+        np: "Відділення",
+        places: "Місця",
+        weight: "Вага",
+        price: "Ціна",
+        note: "Примітка",
+        trip: "Рейс"
+    };
+    const tripParcels = parcels.filter(p=>p.trip===tripName);
+    const tripParcelsFormatted = tripParcels.map(p=>{
+        const obj={};
+        for(let key in headersMap){
+            obj[headersMap[key]] = p[key] || '';
+        }
+        return obj;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(tripParcelsFormatted);
+
+    // Автоширина стовпців
+    const wscols = Object.keys(tripParcelsFormatted[0]).map(col=>{
+        const maxLen = Math.max(...tripParcelsFormatted.map(r=>(r[col]||'').toString().length), col.length);
+        return { wch: maxLen + 5 };
+    });
+    ws['!cols'] = wscols;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, tripName);
+    XLSX.writeFile(wb, `${tripName}.xlsx`);
+}
+
+// Експорт рейсу PDF
+function exportPDFTrip(tripName){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y=10;
+    const tripParcels = parcels.filter(p=>p.trip===tripName);
+    doc.text(`Рейс: ${tripName}`, 10, y); y+=8;
+    tripParcels.forEach(p=>{
+        doc.text(`${p.number}, ${p.phone}, ${p.city}, ${p.name}, ${p.np}, ${p.places}, ${p.weight}, ${p.price}, ${p.note}`,10,y);
+        y+=7; if(y>280){ doc.addPage(); y=10; }
+    });
+    let total = tripParcels.reduce((sum,p)=>sum+(parseFloat(p.price)||0),0);
+    doc.text(`Сума рейсу: ${total.toFixed(2)} грн`, 10, y);
+    doc.save(`${tripName}.pdf`);
+}
+
+function clearAll(){
+    if(confirm("Ви впевнені?")){
+        trips=[]; parcels=[]; clients={};
+        saveData();
+        renderTripSelect();
+        renderTripsTables();
+    }
+}
+
+// --- Автоматичний перехід Enter по полях ---
+const fieldsOrder = ['parcelNumber','phone','city','fullName','np','places','weight','price','note'];
+fieldsOrder.forEach((id, index) => {
+    const input = document.getElementById(id);
+    input.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+            e.preventDefault();
+            const nextIndex = index + 1;
+            if(nextIndex < fieldsOrder.length){
+                document.getElementById(fieldsOrder[nextIndex]).focus();
+            } else {
+                addParcel();
+            }
+        }
+    });
+});
+
+// Перший рендер
+renderTripsTables();
+</script>
+
+</body>
+</html>
