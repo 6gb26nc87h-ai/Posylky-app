@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Облік посилок PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body { font-family: Arial; padding: 15px; background:#f2f2f2; }
+input, button { width:100%; padding:10px; margin:5px 0; font-size:16px; }
+button { background:#007aff; color:white; border:none; border-radius:8px; }
+table { width:100%; border-collapse:collapse; margin-top:20px; font-size:12px; }
+th, td { border:1px solid #ccc; padding:5px; text-align:left; }
+th { background:#ddd; }
+.total { font-size:18px; font-weight:bold; margin-top:15px; }
+</style>
+</head>
+<body>
+
+<h2>Додавання посилки</h2>
+
+<input id="number" placeholder="Номер посилки">
+<input id="phone" placeholder="Телефон" oninput="autoFillClient()">
+<input id="city" placeholder="Місто">
+<input id="name" placeholder="Прізвище Ім'я">
+<input id="np" placeholder="Відділення Нової Пошти">
+<input id="places" placeholder="Кількість місць">
+<input id="weight" placeholder="Вага">
+<input id="price" placeholder="Ціна">
+<input id="note" placeholder="Примітка">
+
+<button onclick="addParcel()">Додати посилку</button>
+
+<h2>Таблиця</h2>
+
+<table id="table">
+<thead>
+<tr>
+<th>№</th>
+<th>Телефон</th>
+<th>Місто</th>
+<th>ПІБ</th>
+<th>Відділення</th>
+<th>Місця</th>
+<th>Вага</th>
+<th>Ціна</th>
+<th>Примітка</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<div class="total">
+Загальна сума: <span id="totalSum">0</span> грн
+</div>
+
+<button onclick="exportExcel()">Експорт в Excel</button>
+<button onclick="exportPDF()">Експорт в PDF</button>
+<button onclick="clearAll()" style="background:red;">Очистити все</button>
+
+<script>
+let parcels = JSON.parse(localStorage.getItem("parcels")) || [];
+let clients = JSON.parse(localStorage.getItem("clients")) || {};
+
+// Зберігаємо дані в localStorage
+function saveData() {
+    localStorage.setItem("parcels", JSON.stringify(parcels));
+    localStorage.setItem("clients", JSON.stringify(clients));
+}
+
+// Рендеримо таблицю
+function renderTable() {
+    const tbody = document.querySelector("#table tbody");
+    tbody.innerHTML = "";
+    parcels.forEach(p => {
+        tbody.innerHTML += `
+        <tr>
+            <td>${p.number}</td>
+            <td>${p.phone}</td>
+            <td>${p.city}</td>
+            <td>${p.name}</td>
+            <td>${p.np}</td>
+            <td>${p.places}</td>
+            <td>${p.weight}</td>
+            <td>${p.price}</td>
+            <td>${p.note}</td>
+        </tr>`;
+    });
+    calculateTotal();
+}
+
+// Підрахунок загальної суми
+function calculateTotal() {
+    let total = parcels.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+    document.getElementById("totalSum").innerText = total.toFixed(2);
+}
+
+// Додаємо посилку
+function addParcel() {
+    const parcel = {
+        number: number.value,
+        phone: phone.value,
+        city: city.value,
+        name: name.value,
+        np: np.value,
+        places: places.value,
+        weight: weight.value,
+        price: price.value,
+        note: note.value
+    };
+
+    parcels.push(parcel);
+
+    // Зберігаємо клієнта автоматично
+    if (parcel.phone) {
+        clients[parcel.phone] = {
+            city: parcel.city,
+            name: parcel.name,
+            np: parcel.np
+        };
+    }
+
+    saveData();
+    renderTable();
+    document.querySelectorAll("input").forEach(i => i.value = "");
+}
+
+// Автозаповнення по номеру телефону
+function autoFillClient() {
+    const phoneValue = phone.value;
+    if (clients[phoneValue]) {
+        city.value = clients[phoneValue].city;
+        name.value = clients[phoneValue].name;
+        np.value = clients[phoneValue].np;
+    }
+}
+
+// Експорт в Excel
+function exportExcel() {
+    const ws = XLSX.utils.json_to_sheet(parcels);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Посилки");
+    XLSX.writeFile(wb, "posylky.xlsx");
+}
+
+// Експорт в PDF
+async function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 10;
+    parcels.forEach(p => {
+        doc.text(
+            `${p.number}, ${p.phone}, ${p.city}, ${p.name}, ${p.np}, ${p.places}, ${p.weight}, ${p.price}, ${p.note}`,
+            10, y
+        );
+        y += 10;
+    });
+    doc.save("posylky.pdf");
+}
+
+// Очистка даних
+function clearAll() {
+    if (confirm("Ви впевнені?")) {
+        parcels = [];
+        clients = {};
+        saveData();
+        renderTable();
+    }
+}
+
+// Перший рендер
+renderTable();
+</script>
+
+</body>
+</html>
