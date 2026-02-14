@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Облік посилок по рейсах</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body { font-family: Arial; padding:15px; background:#f2f2f2; }
+input, select, button { width:100%; padding:10px; margin:5px 0; font-size:16px; }
+button { background:#007aff; color:white; border:none; border-radius:8px; cursor:pointer; }
+button.red { background:red; font-size:14px; padding:5px 10px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+th, td { border:1px solid #ccc; padding:5px; text-align:left; }
+th { background:#ddd; }
+.total { font-size:16px; font-weight:bold; margin-top:5px; }
+h2 { margin-top:20px; }
+.trip-section { margin-bottom:40px; padding:10px; background:#fff; border-radius:8px; }
+.export-buttons { margin-top:5px; display:flex; gap:10px; flex-wrap:wrap; }
+.export-buttons button { width:auto; padding:5px 10px; font-size:14px; }
+.delete-btn { background:red; font-size:12px; padding:3px 6px; }
+
+.city-suggestions, .warehouse-suggestions {
+  position:absolute; background:white; border:1px solid #ccc;
+  max-height:180px; overflow-y:auto; padding:0; margin:0; list-style:none; z-index:100;
+}
+.city-suggestions li, .warehouse-suggestions li {
+  padding:5px; cursor:pointer;
+}
+.city-suggestions li:hover, .warehouse-suggestions li:hover { background:#f0f0f0; }
+</style>
+</head>
+<body>
+
+<h2>Створити новий рейс</h2>
+<input id="newTrip" placeholder="Назва рейсу">
+<button onclick="addTrip()">Створити рейс</button>
+
+<h2>Додати посилку</h2>
+<select id="tripSelect"></select>
+
+<input id="parcelNumber" placeholder="Номер посилки">
+<input id="phone" placeholder="Телефон" oninput="autoFillClient()">
+<div style="position:relative;">
+  <input id="cityNp" placeholder="Місто (Нова Пошта)" autocomplete="off">
+  <ul id="cityNpList" class="city-suggestions"></ul>
+</div>
+<div style="position:relative;">
+  <input id="warehouseNp" placeholder="Відділення NP" autocomplete="off">
+  <ul id="warehouseNpList" class="warehouse-suggestions"></ul>
+</div>
+
+<input id="places" placeholder="Кількість місць">
+<input id="weight" placeholder="Вага">
+<input id="price" placeholder="Ціна">
+<input id="note" placeholder="Примітка">
+
+<button onclick="addParcel()">Додати посилку</button>
+
+<div id="tripsContainer"></div>
+<button onclick="clearAll()" class="red">Очистити все</button>
+
+<script>
+// ==== API ключ Нової Пошти ====
+const NP_API_KEY = "9f9426c72fc723f36e753354c62d41c0"; // твій ключ
+
+// ==== Дані ====
+let trips = JSON.parse(localStorage.getItem("trips")) || [];
+let parcels = JSON.parse(localStorage.getItem("parcels")) || [];
+let clients = JSON.parse(localStorage.getItem("clients")) || {};
+
+function saveData(){
+    localStorage.setItem("trips", JSON.stringify(trips));
+    localStorage.setItem("parcels", JSON.stringify(parcels));
+    localStorage.setItem("clients", JSON.stringify(clients));
+}
+
+// ==== Рейси ====
+function addTrip(){
+    const name=document.getElementById('newTrip').value.trim();
+    if(!name) return alert("Введіть назву рейсу");
+    if(!trips.includes(name)) trips.push(name);
+    document.getElementById('newTrip').value='';
+    saveData();
+    renderTripSelect();
+    renderTripsTables();
+}
+
+function renderTripSelect(){
+    const select=document.getElementById('tripSelect');
+    select.innerHTML = trips.map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+renderTripSelect();
+
+// ==== Посилки ====
+function addParcel(){
+    const trip = document.getElementById('tripSelect').value;
+    if(!trip) return alert("Створіть рейс!");
+
+    const parcel={
+        id: Date.now(),
+        trip,
+        number: parcelNumber.value,
+        phone: phone.value,
+        city: cityNp.value,
+        np: warehouseNp.value,
+        places: places.value,
+        weight: weight.value,
+        price: price.value,
+        note: note.value
+    };
+
+    if(parcel.phone){
+        clients[parcel.phone] = { city: parcel.city, np: parcel.np };
+    }
+
+    parcels.push(parcel);
+    saveData();
+    renderTripsTables();
+
+    parcelNumber.value=''; phone.value=''; cityNp.value=''; warehouseNp.value='';
+    places.value=''; weight.value=''; price.value=''; note.value='';
+    document.getElementById('parcelNumber').focus();
+}
+
+function autoFillClient(){
+    const phoneValue = phone.value;
+    if(clients[phoneValue]){
+        cityNp.value = clients[phoneValue].city || '';
+        warehouseNp.value = clients[phoneValue].np || '';
+    }
+}
+
+// ==== Відображення таблиць ====
+function renderTripsTables(){
+    const container=document.getElementById('tripsContainer');
+    container.innerHTML='';
+    trips.forEach(tripName=>{
+        const tripParcels = parcels.filter(p=>p.trip===tripName);
+        if(tripParcels.length===0) return;
+
+        let section=document.createElement('div'); section.className='trip-section';
+        let title=document.createElement('h3'); title.innerText=`Рейс: ${tripName}`;
+        section.appendChild(title);
+
+        let table=document.createElement('table');
+        let thead=document.createElement('thead');
+        thead.innerHTML=`<tr>
+            <th>№</th><th>Телефон</th><th>Місто</th><th>Відділення</th><th>Місця</th>
+            <th>Вага</th><th>Ціна</th><th>Примітка</th><th>Дії</th>
+        </tr>`;
+        table.appendChild(thead);
+
+        let tbody=document.createElement('tbody');
+        tripParcels.forEach(p=>{
+            let tr=document.createElement('tr');
+            tr.innerHTML=`<td>${p.number}</td><td>${p.phone}</td><td>${p.city}</td>
+                          <td>${p.np}</td><td>${p.places}</td><td>${p.weight}</td>
+                          <td>${p.price}</td><td>${p.note}</td>
+                          <td><button class="delete-btn" onclick="deleteParcel(${p.id})">Видалити</button></td>`;
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody); section.appendChild(table);
+
+        let total = tripParcels.reduce((sum,p)=>sum+(parseFloat(p.price)||0),0);
+        let totalDiv=document.createElement('div'); totalDiv.className='total';
+        totalDiv.innerText=`Сума рейсу: ${total.toFixed(2)} грн`;
+        section.appendChild(totalDiv);
+
+        let exportDiv=document.createElement('div'); exportDiv.className='export-buttons';
+        exportDiv.innerHTML=`<button onclick="exportExcelTrip('${tripName}')">Експорт Excel</button>
+                             <button onclick="exportPDFTrip('${tripName}')">Експорт PDF</button>
+                             <button class="red" onclick="deleteTrip('${tripName}')">Видалити рейс</button>`;
+        section.appendChild(exportDiv);
+
+        container.appendChild(section);
+    });
+}
+
+function deleteParcel(id){
+    if(confirm("Видалити цю посилку?")){
+        parcels = parcels.filter(p=>p.id!==id);
+        saveData(); renderTripsTables();
+    }
+}
+
+function deleteTrip(tripName){
+    if(confirm("Видалити весь рейс разом з посилками?")){
+        parcels = parcels.filter(p=>p.trip!==tripName);
+        trips = trips.filter(t=>t!==tripName);
+        saveData(); renderTripSelect(); renderTripsTables();
+    }
+}
+
+// ==== Експорт ====
+function exportExcelTrip(tripName){
+    const headersMap={number:"№", phone:"Телефон", city:"Місто", np:"Відділення", places:"Місця", weight:"Вага", price:"Ціна", note:"Примітка"};
+    const tripParcels = parcels.filter(p=>p.trip===tripName);
+    const tripParcelsFormatted = tripParcels.map(p=>{
+        const obj={}; for(let k in headersMap){ obj[headersMap[k]]=p[k]||''; } return obj;
+    });
+
+    const ws=XLSX.utils.json_to_sheet(tripParcelsFormatted);
+    ws['!cols'] = Object.keys(tripParcelsFormatted[0]).map(col=>{
+        const maxLen=Math.max(...tripParcelsFormatted.map(r=>(r[col]||'').toString().length), col.length);
+        return { wch:maxLen+5 };
+    });
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, tripName);
+    XLSX.writeFile(wb, `${tripName}.xlsx`);
+}
+
+function exportPDFTrip(tripName){
+    const { jsPDF }=window.jspdf; const doc=new jsPDF();
+    let y=10; const tripParcels=parcels.filter(p=>p.trip===tripName);
+    doc.text(`Рейс: ${tripName}`,10,y); y+=8;
+    tripParcels.forEach(p=>{
+        doc.text(`${p.number}, ${p.phone}, ${p.city}, ${p.np}, ${p.places}, ${p.weight}, ${p.price}, ${p.note}`,10,y);
+        y+=7; if(y>280){ doc.addPage(); y=10; }
+    });
+    let total = tripParcels.reduce((sum,p)=>sum+(parseFloat(p.price)||0),0);
+    doc.text(`Сума рейсу: ${total.toFixed(2)} грн`,10,y);
+    doc.save(`${tripName}.pdf`);
+}
+
+function clearAll(){
+    if(confirm("Ви впевнені?")){ trips=[]; parcels=[]; clients={}; saveData(); renderTripSelect(); renderTripsTables(); }
+}
+
+// ==== Enter переходи по полях ====
+const fieldsOrder=['parcelNumber','phone','cityNp','warehouseNp','places','weight','price','note'];
+fieldsOrder.forEach((id,index)=>{
+    const input=document.getElementById(id);
+    input.addEventListener('keydown', function(e){
+        if(e.key==='Enter'){ e.preventDefault();
+            const nextIndex=index+1;
+            if(nextIndex<fieldsOrder.length){ document.getElementById(fieldsOrder[nextIndex]).focus(); } else { addParcel(); }
+        }
+    });
+});
+
+// ==== API Нова Пошта ====
+async function loadWarehouses(cityRef){
+    const list=document.getElementById('warehouseNpList'); list.innerHTML='';
+    const body={ apiKey: NP_API_KEY, modelName:"AddressGeneral", calledMethod:"getWarehouses", methodProperties:{CityRef:cityRef} };
+    const res=await fetch("https://api.novaposhta.ua/v2.0/json/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+    const data=await res.json(); const whs=data.data||[];
+    whs.forEach(w=>{
+        const li=document.createElement('li'); li.textContent=`${w.Description} (${w.Number})`; li.onclick=()=>{ document.getElementById('warehouseNp').value=`${w.Description} (${w.Number})`; list.innerHTML=''; }; list.appendChild(li);
+    });
+}
+
+document.getElementById('cityNp').addEventListener('input', async function(){
+    const q=this.value.trim(); const list=document.getElementById('cityNpList'); list.innerHTML='';
+    if(q.length<2) return;
+    const body={ apiKey: NP_API_KEY, modelName:"Address", calledMethod:"getCities", methodProperties:{FindByString:q} };
+    const res=await fetch("https://api.novaposhta.ua/v2.0/json/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+    const data=await res.json(); const cities=data.data||[];
+    cities.forEach(c=>{
+        const li=document.createElement('li'); li.textContent=c.Description; li.onclick=()=>{ document.getElementById('cityNp').value=c.Description; list.innerHTML=''; loadWarehouses(c.Ref); }; list.appendChild(li);
+    });
+});
+
+// ==== Перший рендер ====
+renderTripsTables();
+</script>
+</body>
+</html>
