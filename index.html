@@ -41,6 +41,7 @@ th { background:#007aff; color:white; }
 <input id="volume" type="number" inputmode="decimal" placeholder="Обʼємна вага">
 <input id="weight" type="number" inputmode="decimal" placeholder="Фактична вага">
 <input id="price" type="number" inputmode="decimal" placeholder="Ціна">
+<label><input type="checkbox" id="ourPayment"> Наша оплата</label>
 <input id="note" placeholder="Примітка" type="text">
 
 <button onclick="addParcel()">Додати посилку</button>
@@ -48,13 +49,13 @@ th { background:#007aff; color:white; }
 <div id="tables"></div>
 
 <script>
+// Дані
 let parcels = JSON.parse(localStorage.getItem("parcels"))||[];
 let trips = JSON.parse(localStorage.getItem("trips"))||[];
 let clients = JSON.parse(localStorage.getItem("clients"))||{};
 
-// Повний список міст України (популярні ~450)
-const cities = ["Київ","Харків","Одеса","Дніпро","Львів","Запоріжжя","Вінниця","Полтава","Чернігів","Черкаси","Хмельницький","Житомир","Суми","Рівне","Івано-Франківськ","Тернопіль","Луцьк","Ужгород","Кропивницький","Миколаїв","Херсон","Біла Церква","Кременчук","Мелітополь","Краматорськ","Бровари","Конотоп","Сєвєродонецьк","Керч","Маріуполь","Нікополь","Кам'янець-Подільський","Шостка","Ніжин","Бориспіль","Слов'янськ","Калуш","Буча","Фастів","Каховка","Бердянськ","Ізмаїл","Хуст","Теребовля","Павлоград","Сарни","Яготин","Дрогобич","Чортків","Вишневе","Горішні Плавні","Новий Розділ","Козятин","Заліщики","Олександрія","Тростянець","Сєвєродонецьк","Павлоград","Кам'янець-Подільський","Берегове","Скадовськ","Шепетівка","Нова Каховка","Умань","Сміла","Бережани","Рівне","Ковель","Коростень","Лисичанськ","Славутич","Володимир-Волинський","Новоайдар","Миргород","Жовті Води","Горлівка","Тернопіль","Краматорськ","Миколаїв","Львів","Маріуполь","Бахмут","Слов’янськ","Бориспіль","Біла Церква","Київ","Житомир","Рівне","Хмельницький","Кременчук","Кропивницький","Луцьк","Ужгород","Івано-Франківськ","Тернопіль","Черкаси","Чернівці","Чернігів","Суми","Полтава","Запоріжжя","Мелітополь","Одеса","Харків","Дніпро"];
-
+// Список міст України
+const cities = ["Київ","Харків","Одеса","Дніпро","Львів","Запоріжжя","Вінниця","Полтава","Чернігів","Черкаси","Хмельницький","Житомир","Суми","Рівне","Івано-Франківськ","Тернопіль","Луцьк","Ужгород","Кропивницький","Миколаїв","Херсон","Біла Церква","Кременчук","Мелітополь","Краматорськ","Бровари","Конотоп","Сєвєродонецьк","Маріуполь","Нікополь","Кам'янець-Подільський","Шостка","Ніжин","Бориспіль","Слов'янськ","Калуш","Буча","Фастів","Каховка","Бердянськ","Ізмаїл","Хуст","Павлоград","Сарни","Яготин","Дрогобич","Чортків","Вишневе","Горішні Плавні","Новий Розділ","Козятин","Заліщики","Олександрія","Тростянець","Сєвєродонецьк","Павлоград","Кам'янець-Подільський","Берегове","Скадовськ","Шепетівка","Нова Каховка","Умань","Сміла","Бережани","Рівне","Ковель","Коростень","Лисичанськ","Славутич","Володимир-Волинський","Новоайдар","Миргород","Жовті Води","Горлівка","Тернопіль","Краматорськ","Миколаїв","Львів","Маріуполь","Бахмут","Слов’янськ","Бориспіль","Біла Церква","Київ","Житомир","Рівне","Хмельницький","Кременчук","Кропивницький","Луцьк","Ужгород","Івано-Франківськ","Тернопіль","Черкаси","Чернівці","Чернігів","Суми","Полтава","Запоріжжя","Мелітополь","Одеса","Харків","Дніпро"];
 const citiesList = document.getElementById("citiesList");
 const city = document.getElementById("city");
 function filterCities(query){
@@ -75,7 +76,7 @@ function autoSave(){
     localStorage.setItem("clients", JSON.stringify(clients));
 }
 
-// Рейси
+// Створення рейсу
 const tripSelect = document.getElementById("tripSelect");
 function createTrip(){
     const name = tripName.value.trim();
@@ -111,6 +112,7 @@ function addParcel(){
         volume: Number(volume.value||0),
         weight: Number(weight.value||0),
         price: Number(price.value||0),
+        ourPayment: document.getElementById("ourPayment").checked,
         note: note.value
     });
     clients[phone.value]=fullName.value;
@@ -120,6 +122,7 @@ function addParcel(){
 }
 function clearInputs(){
     document.querySelectorAll("input:not(#tripName)").forEach(i=>i.value="");
+    document.getElementById("ourPayment").checked=false;
 }
 
 // Видалити посилку
@@ -166,7 +169,7 @@ function renderTables(){
             <table>
             <tr>
                 <th>ПІБ</th><th>Номер</th><th>Телефон</th><th>Місто</th><th>Відділення</th>
-                <th>Місця</th><th>Обʼєм</th><th>Вага</th><th>Ціна</th><th>❌</th>
+                <th>Місця</th><th>Обʼєм</th><th>Вага</th><th>Ціна</th><th>Наша оплата</th><th>❌</th>
             </tr>
             ${tripParcels.map(p=>`
                 <tr>
@@ -179,6 +182,7 @@ function renderTables(){
                     <td>${p.volume}</td>
                     <td>${p.weight}</td>
                     <td>${p.price}</td>
+                    <td>${p.ourPayment ? "✓" : ""}</td>
                     <td><button class="delete" onclick="deleteParcel(${p.id})">X</button></td>
                 </tr>
             `).join("")}
@@ -188,25 +192,25 @@ function renderTables(){
     });
 }
 
-// Експорт Excel українською з автошириною
+// Експорт Excel українською
 function exportExcel(trip){
     const tripParcels = parcels.filter(p=>p.trip===trip);
     if(!tripParcels.length) return alert("Немає даних для експорту!");
-    const headersMap = {fullName:"ПІБ", number:"Номер", phone:"Телефон", city:"Місто", branch:"Відділення", places:"Місця", volume:"Обʼєм", weight:"Вага", price:"Ціна", note:"Примітка"};
+    const headersMap = {fullName:"ПІБ", number:"Номер", phone:"Телефон", city:"Місто", branch:"Відділення", places:"Місця", volume:"Обʼєм", weight:"Вага", price:"Ціна", ourPayment:"Наша оплата", note:"Примітка"};
     const data = tripParcels.map(p=>{
         let obj={};
         for(let k in headersMap) obj[headersMap[k]] = p[k] || '';
+        if(p.ourPayment) obj["Наша оплата"]="✓";
         return obj;
     });
     const ws = XLSX.utils.json_to_sheet(data);
-    // автоширина
     ws['!cols'] = Object.keys(data[0]).map(k=>({wch:Math.max(...data.map(r=>String(r[k]).length),k.length)+5}));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, trip);
     XLSX.writeFile(wb, `Рейс_${trip}.xlsx`);
 }
 
-// Автозаповнення клієнта по телефону
+// Автозаповнення по телефону
 phone.addEventListener("blur", function(){
     if(clients[this.value]) fullName.value = clients[this.value];
 });
