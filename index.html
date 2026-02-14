@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Облік посилок</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    margin:0;
+    padding:10px;
+    background:#f2f2f2;
+}
+h2{margin:15px 0 5px;}
+input,select,button{
+    width:100%;
+    padding:12px;
+    margin:5px 0;
+    font-size:16px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
+button{
+    background:#007aff;
+    color:white;
+    border:none;
+}
+button.red{background:#e53935;}
+button.small{
+    width:auto;
+    padding:6px 10px;
+    font-size:13px;
+    margin-right:5px;
+}
+.trip{
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+}
+th,td{
+    border:1px solid #ddd;
+    padding:4px;
+    word-break:break-word;
+}
+th{background:#eee;}
+.total{
+    font-weight:bold;
+    margin-top:5px;
+}
+.city-box{position:relative;}
+.city-list{
+    position:absolute;
+    width:100%;
+    background:white;
+    border:1px solid #ccc;
+    max-height:180px;
+    overflow:auto;
+    list-style:none;
+    padding:0;
+    margin:0;
+    z-index:10;
+}
+.city-list li{
+    padding:6px;
+}
+.city-list li:hover{
+    background:#f0f0f0;
+}
+</style>
+</head>
+<body>
+
+<h2>Новий рейс</h2>
+<input id="newTrip" placeholder="Назва рейсу">
+<button onclick="addTrip()">Створити рейс</button>
+
+<h2>Додати посилку</h2>
+<select id="tripSelect"></select>
+
+<input id="parcelNumber" placeholder="Номер посилки">
+<input id="phone" placeholder="Телефон">
+
+<div class="city-box">
+<input id="city" placeholder="Місто">
+<ul id="cityList" class="city-list"></ul>
+</div>
+
+<input id="places" placeholder="Кількість місць">
+<input id="weight" placeholder="Вага">
+<input id="price" placeholder="Ціна">
+<input id="note" placeholder="Примітка">
+
+<button onclick="addParcel()">Додати посилку</button>
+
+<div id="tripsContainer"></div>
+
+<button class="red" onclick="clearAll()">Очистити все</button>
+
+<script>
+
+// ================= ДАНІ =================
+let trips = JSON.parse(localStorage.getItem("trips")) || [];
+let parcels = JSON.parse(localStorage.getItem("parcels")) || [];
+
+function save(){
+    localStorage.setItem("trips",JSON.stringify(trips));
+    localStorage.setItem("parcels",JSON.stringify(parcels));
+}
+
+// ================= МІСТА =================
+const cities = [
+"Київ","Львів","Харків","Одеса","Дніпро","Запоріжжя","Вінниця","Чернігів",
+"Черкаси","Суми","Полтава","Хмельницький","Житомир","Чернівці",
+"Івано-Франківськ","Рівне","Луцьк","Тернопіль","Ужгород","Миколаїв",
+"Кропивницький","Біла Церква","Кременчук","Краматорськ","Слов'янськ",
+"Бровари","Бориспіль","Кривий Ріг","Маріуполь","Мелітополь",
+"Бердичів","Бердянськ","Буча","Васильків","Вишневе","Вишгород",
+"Дрогобич","Калуш","Кам'янець-Подільський","Коломия","Мукачево",
+"Ніжин","Обухів","Павлоград","Прилуки","Стрий","Фастів","Хуст",
+"Шостка","Яворів","Яготин"
+];
+
+// ================= АВТОПІДТЯГУВАННЯ =================
+const cityInput=document.getElementById("city");
+const cityList=document.getElementById("cityList");
+
+cityInput.addEventListener("input",function(){
+    const q=this.value.toLowerCase();
+    cityList.innerHTML="";
+    if(q.length<2)return;
+    cities.forEach(c=>{
+        if(c.toLowerCase().includes(q)){
+            const li=document.createElement("li");
+            li.textContent=c;
+            li.onclick=()=>{
+                cityInput.value=c;
+                cityList.innerHTML="";
+            };
+            cityList.appendChild(li);
+        }
+    });
+});
+
+// ================= РЕЙСИ =================
+function addTrip(){
+    const name=newTrip.value.trim();
+    if(!name)return alert("Введіть назву");
+    if(!trips.includes(name))trips.push(name);
+    newTrip.value="";
+    save();
+    renderTrips();
+}
+
+function renderTrips(){
+    tripSelect.innerHTML=trips.map(t=>`<option>${t}</option>`).join("");
+    const container=document.getElementById("tripsContainer");
+    container.innerHTML="";
+    trips.forEach(trip=>{
+        const tripParcels=parcels.filter(p=>p.trip===trip);
+        if(!tripParcels.length)return;
+
+        let div=document.createElement("div");
+        div.className="trip";
+
+        div.innerHTML=`<h3>Рейс: ${trip}</h3>
+        <button class="small" onclick="exportExcel('${trip}')">Excel</button>
+        <button class="small" onclick="exportPDF('${trip}')">PDF</button>`;
+
+        let table=document.createElement("table");
+        table.innerHTML=`<tr>
+        <th>№</th><th>Телефон</th><th>Місто</th>
+        <th>Місця</th><th>Вага</th><th>Ціна</th><th></th></tr>`;
+
+        tripParcels.forEach(p=>{
+            table.innerHTML+=`
+            <tr>
+            <td>${p.number}</td>
+            <td>${p.phone}</td>
+            <td>${p.city}</td>
+            <td>${p.places}</td>
+            <td>${p.weight}</td>
+            <td>${p.price}</td>
+            <td><button class="small red" onclick="deleteParcel(${p.id})">X</button></td>
+            </tr>`;
+        });
+
+        const total=tripParcels.reduce((s,p)=>s+(+p.price||0),0);
+
+        div.appendChild(table);
+        div.innerHTML+=`<div class="total">Сума: ${total} грн</div>`;
+        container.appendChild(div);
+    });
+}
+
+// ================= ПОСИЛКИ =================
+function addParcel(){
+    const trip=tripSelect.value;
+    if(!trip)return alert("Створіть рейс");
+    parcels.push({
+        id:Date.now(),
+        trip,
+        number:parcelNumber.value,
+        phone:phone.value,
+        city:city.value,
+        places:places.value,
+        weight:weight.value,
+        price:price.value,
+        note:note.value
+    });
+    parcelNumber.value=phone.value=city.value=places.value=weight.value=price.value=note.value="";
+    save();
+    renderTrips();
+}
+
+function deleteParcel(id){
+    parcels=parcels.filter(p=>p.id!==id);
+    save();
+    renderTrips();
+}
+
+function clearAll(){
+    if(confirm("Очистити все?")){
+        trips=[];
+        parcels=[];
+        save();
+        renderTrips();
+    }
+}
+
+// ================= ЕКСПОРТ =================
+function exportExcel(trip){
+    const data=parcels.filter(p=>p.trip===trip);
+    const ws=XLSX.utils.json_to_sheet(data);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,"Рейс");
+    XLSX.writeFile(wb,`Рейс_${trip}.xlsx`);
+}
+
+function exportPDF(trip){
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF();
+    const data=parcels.filter(p=>p.trip===trip);
+    let y=10;
+    doc.text(`Рейс: ${trip}`,10,y);
+    y+=10;
+    data.forEach((p,i)=>{
+        doc.text(`${i+1}. ${p.number} ${p.city} ${p.price} грн`,10,y);
+        y+=8;
+        if(y>280){doc.addPage();y=10;}
+    });
+    doc.save(`Рейс_${trip}.pdf`);
+}
+
+renderTrips();
+</script>
+</body>
+</html>
