@@ -8,23 +8,33 @@
 <style>
 * { box-sizing:border-box; }
 body { font-family:-apple-system,BlinkMacSystemFont,sans-serif; margin:0; padding:12px; background:#f2f4f7; }
-h2 { text-align:center; margin-bottom:10px; }
-input, select, button { padding:12px; margin:5px 0; font-size:16px; border-radius:12px; border:1px solid #ccc; }
+h2 { text-align:center; margin-bottom:10px; font-size:20px; }
+input, select, button { padding:10px; margin:5px 0; font-size:16px; border-radius:12px; border:1px solid #ccc; }
 input[type=number], input[type=text], input[type=tel] { width:100%; }
-.button-row { display:flex; gap:5px; }
-button { background:#007aff; color:white; border:none; border-radius:12px; flex:1; }
+.button-row { display:flex; gap:5px; flex-wrap:wrap; }
+button { background:#007aff; color:white; border:none; border-radius:12px; flex:1; min-width:48%; cursor:pointer; }
 button.delete { background:#ff3b30; }
-button.export { background:#34c759; margin-top:8px; }
-button:active { transform:scale(0.98); }
-.table-wrapper { margin-top:25px; background:white; padding:10px; border-radius:14px; box-shadow:0 2px 6px rgba(0,0,0,0.05); overflow-x:auto; }
-table { min-width:1000px; width:100%; border-collapse:collapse; }
+button.export { background:#34c759; margin-top:8px; width:100%; }
+button:active { transform:scale(0.97); }
+.table-wrapper { margin-top:20px; background:white; padding:8px; border-radius:14px; box-shadow:0 2px 6px rgba(0,0,0,0.05); overflow-x:auto; transition:max-height 0.3s ease; }
+table { min-width:900px; width:100%; border-collapse:collapse; transition:opacity 0.3s; }
 th, td { padding:6px; font-size:12px; text-align:center; border-bottom:1px solid #eee; }
-th { background:#007aff; color:white; }
+th { background:#007aff; color:white; font-size:13px; }
 .summary { font-weight:bold; font-size:14px; margin:8px 0; }
-.checkbox-inline { display:flex; align-items:center; gap:5px; margin:5px 0; }
+.checkbox-inline { display:flex; align-items:center; gap:5px; margin:5px 0; font-size:14px; }
 .checkbox-inline input { margin:0; }
-.price-row { display:flex; gap:5px; align-items:center; }
-.price-row input { flex:1; }
+.price-row { display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+.price-row input { flex:1; min-width:50%; }
+tr:hover { background:#e6f0ff; }
+.ourPaymentCell { color:#34c759; font-weight:bold; }
+.invoiceCell { color:#ff9500; font-weight:bold; }
+.tripHeader { cursor:pointer; padding:5px 0; background:#d9ecff; border-radius:8px; text-align:center; margin:5px 0; font-weight:bold; }
+.tripHeader:hover { background:#bde0ff; }
+@media (max-width: 420px){
+    input, select, button { font-size:14px; padding:8px; }
+    th, td { font-size:11px; padding:4px; }
+    h2 { font-size:18px; }
+}
 </style>
 </head>
 <body>
@@ -44,7 +54,7 @@ th { background:#007aff; color:white; }
 <datalist id="citiesList"></datalist>
 <input id="branch" placeholder="Відділення Нової Пошти" type="text">
 <input id="places" type="number" inputmode="numeric" placeholder="Кількість місць">
-<input id="volume" type="number" inputmode="decimal" placeholder="Обʼємна вага">
+<input id="volume" placeholder="Обʼємна вага (можна через ,)" type="text">
 <input id="weight" type="number" inputmode="decimal" placeholder="Фактична вага">
 
 <div class="price-row">
@@ -54,23 +64,21 @@ th { background:#007aff; color:white; }
 </div>
 
 <input id="note" placeholder="Примітка" type="text">
-<button onclick="addParcel()">Додати посилку</button>
+<button onclick="addParcel()">Додати / Зберегти посилку</button>
 
 <div id="tables"></div>
 
 <script>
-// Дані
 let parcels = JSON.parse(localStorage.getItem("parcels"))||[];
 let trips = JSON.parse(localStorage.getItem("trips"))||[];
 let clients = JSON.parse(localStorage.getItem("clients"))||{};
 let userCities = JSON.parse(localStorage.getItem("userCities"))||[];
+let editId = null;
 
-// Стандартні міста
 const cities = ["Київ","Харків","Одеса","Дніпро","Львів","Запоріжжя","Вінниця","Полтава","Чернігів","Черкаси","Хмельницький","Житомир","Суми","Рівне","Івано-Франківськ","Тернопіль","Луцьк","Ужгород","Кропивницький","Миколаїв"];
 const citiesList = document.getElementById("citiesList");
 const city = document.getElementById("city");
 
-// Фільтр міст + користувацькі
 function filterCities(query){
     citiesList.innerHTML = "";
     const allCities = [...cities,...userCities];
@@ -83,7 +91,6 @@ function filterCities(query){
 }
 city.addEventListener("input",()=>filterCities(city.value));
 
-// Автозбереження
 function autoSave(){
     localStorage.setItem("parcels", JSON.stringify(parcels));
     localStorage.setItem("trips", JSON.stringify(trips));
@@ -91,7 +98,6 @@ function autoSave(){
     localStorage.setItem("userCities", JSON.stringify(userCities));
 }
 
-// Створення рейсу
 const tripSelect = document.getElementById("tripSelect");
 function createTrip(){
     const name = tripName.value.trim();
@@ -111,13 +117,12 @@ function deleteTrip(){
     renderTrips();
 }
 
-// Додати посилку
 function addParcel(){
     const trip = tripSelect.value;
     if(!trip) return alert("Створіть рейс!");
     
-    parcels.push({
-        id: Date.now(),
+    const parcelData = {
+        id: editId || Date.now(),
         trip,
         fullName: fullName.value,
         number: parcelNumber.value,
@@ -125,19 +130,25 @@ function addParcel(){
         city: city.value,
         branch: branch.value,
         places: Number(places.value||0),
-        volume: Number(volume.value||0),
+        volume: volume.value,
         weight: Number(weight.value||0),
         price: Number(price.value||0),
         ourPayment: document.getElementById("ourPayment").checked,
         invoice: document.getElementById("invoice").checked,
         note: note.value
-    });
+    };
 
-    clients[phone.value]=fullName.value;
+    clients[phone.value] = fullName.value;
 
-    // Додаємо місто користувацьке
     if(city.value && !userCities.includes(city.value) && !cities.includes(city.value)){
         userCities.push(city.value);
+    }
+
+    if(editId){
+        parcels = parcels.map(p=>p.id===editId ? parcelData : p);
+        editId = null;
+    } else {
+        parcels.push(parcelData);
     }
 
     autoSave();
@@ -151,14 +162,30 @@ function clearInputs(){
     document.getElementById("invoice").checked=false;
 }
 
-// Видалити посилку
 function deleteParcel(id){
     parcels = parcels.filter(p=>p.id!==id);
     autoSave();
     renderTables();
 }
 
-// Відобразити рейси
+function editParcel(id){
+    const p = parcels.find(p=>p.id===id);
+    if(!p) return;
+    editId = id;
+    fullName.value = p.fullName;
+    parcelNumber.value = p.number;
+    phone.value = p.phone;
+    city.value = p.city;
+    branch.value = p.branch;
+    places.value = p.places;
+    volume.value = p.volume;
+    weight.value = p.weight;
+    price.value = p.price;
+    document.getElementById("ourPayment").checked = p.ourPayment;
+    document.getElementById("invoice").checked = p.invoice;
+    note.value = p.note;
+}
+
 function renderTrips(){
     tripSelect.innerHTML="";
     trips.forEach(trip=>{
@@ -170,7 +197,6 @@ function renderTrips(){
     renderTables();
 }
 
-// Таблиці
 const tables = document.getElementById("tables");
 function renderTables(){
     tables.innerHTML="";
@@ -185,41 +211,51 @@ function renderTables(){
         wrapper.className="table-wrapper";
 
         wrapper.innerHTML=`
-            <h3>${trip}</h3>
-            <div class="summary">
-                💰 Сума: ${totalPrice} грн |
-                ⚖️ Вага: ${totalWeight} кг |
-                📦 Місця: ${totalPlaces}
+            <div class="tripHeader" onclick="toggleTable(this)">
+                ${trip} | 💰 ${totalPrice} € | ⚖️ ${totalWeight} кг | 📦 ${totalPlaces}
             </div>
-            <button class="export" onclick="exportExcel('${trip}')">Експорт Excel</button>
-            <table>
-            <tr>
-                <th>ПІБ</th><th>Номер</th><th>Телефон</th><th>Місто</th><th>Відділення</th>
-                <th>Місця</th><th>Обʼєм</th><th>Вага</th><th>Ціна</th><th>Наша оплата</th><th>Рахунок</th><th>❌</th>
-            </tr>
-            ${tripParcels.map(p=>`
-                <tr>
-                    <td>${p.fullName}</td>
-                    <td>${p.number}</td>
-                    <td>${p.phone}</td>
-                    <td>${p.city}</td>
-                    <td>${p.branch}</td>
-                    <td>${p.places}</td>
-                    <td>${p.volume}</td>
-                    <td>${p.weight}</td>
-                    <td>${p.price}</td>
-                    <td>${p.ourPayment ? "✓" : ""}</td>
-                    <td>${p.invoice ? "✓" : ""}</td>
-                    <td><button class="delete" onclick="deleteParcel(${p.id})">X</button></td>
-                </tr>
-            `).join("")}
-            </table>
+            <div class="tableContent" style="display:none;">
+                <button class="export" onclick="exportExcel('${trip}')">Експорт Excel</button>
+                <table>
+                    <tr>
+                        <th>ПІБ</th><th>Номер</th><th>Телефон</th><th>Місто</th><th>Відділення</th>
+                        <th>Місця</th><th>Обʼєм</th><th>Вага</th><th>Ціна</th><th>Наша оплата</th><th>Рахунок</th><th>Дії</th>
+                    </tr>
+                    ${tripParcels.map(p=>`
+                        <tr>
+                            <td>${p.fullName}</td>
+                            <td>${p.number}</td>
+                            <td>${p.phone}</td>
+                            <td>${p.city}</td>
+                            <td>${p.branch}</td>
+                            <td>${p.places}</td>
+                            <td>${p.volume}</td>
+                            <td>${p.weight}</td>
+                            <td>${p.price}</td>
+                            <td class="ourPaymentCell">${p.ourPayment?"✓":""}</td>
+                            <td class="invoiceCell">${p.invoice?"✓":""}</td>
+                            <td>
+                                <button class="delete" onclick="editParcel(${p.id})">✎</button>
+                                <button class="delete" onclick="deleteParcel(${p.id})">X</button>
+                            </td>
+                        </tr>
+                    `).join("")}
+                </table>
+            </div>
         `;
         tables.appendChild(wrapper);
     });
 }
 
-// Експорт Excel українською
+function toggleTable(header){
+    const content = header.nextElementSibling;
+    if(content.style.display==="none"){
+        content.style.display="block";
+    } else {
+        content.style.display="none";
+    }
+}
+
 function exportExcel(trip){
     const tripParcels = parcels.filter(p=>p.trip===trip);
     if(!tripParcels.length) return alert("Немає даних для експорту!");
@@ -238,12 +274,10 @@ function exportExcel(trip){
     XLSX.writeFile(wb, `Рейс_${trip}.xlsx`);
 }
 
-// Автозаповнення по телефону
 phone.addEventListener("blur", function(){
     if(clients[this.value]) fullName.value = clients[this.value];
 });
 
-// Enter для переходу між полями
 const fields = ["fullName","parcelNumber","phone","city","branch","places","volume","weight","price","note"];
 fields.forEach((id,index)=>{
     document.getElementById(id).addEventListener("keydown", function(e){
