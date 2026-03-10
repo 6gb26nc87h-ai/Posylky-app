@@ -125,7 +125,7 @@ function addParcel(){
         id: editId || Date.now(),
         trip,
         fullName: fullName.value,
-        number: parcelNumber.value,  // беремо поточне значення
+        number: parcelNumber.value,
         phone: phone.value,
         city: city.value,
         branch: branch.value,
@@ -138,8 +138,12 @@ function addParcel(){
         note: note.value
     };
 
-    clients[phone.value] = fullName.value;
-
+    // Зберігаємо дані клієнта по номеру телефону
+clients[phone.value] = {
+    fullName: fullName.value,
+    city: city.value,
+    branch: branch.value
+};
     if(city.value && !userCities.includes(city.value) && !cities.includes(city.value)){
         userCities.push(city.value);
     }
@@ -150,7 +154,7 @@ function addParcel(){
     } else {
         parcels.push(parcelData);
 
-        // Інкрементуємо номер посилки на +1
+        // --- ІНКРЕМЕНТ НОМЕРА ---
         let currentNumber = Number(parcelNumber.value);
         if(!isNaN(currentNumber)){
             parcelNumber.value = currentNumber + 1;
@@ -174,7 +178,7 @@ function clearInputs(){
     note.value="";
     document.getElementById("ourPayment").checked=false;
     document.getElementById("invoice").checked=false;
-    // **номер посилки не очищається**, він вже автоматично збільшився
+    // номер посилки не очищається, бо він вже інкрементувався
 }
 
 function deleteParcel(id){
@@ -264,11 +268,7 @@ function renderTables(){
 
 function toggleTable(header){
     const content = header.nextElementSibling;
-    if(content.style.display==="none"){
-        content.style.display="block";
-    } else {
-        content.style.display="none";
-    }
+    content.style.display = content.style.display==="none" ? "block" : "none";
 }
 
 function exportExcel(trip){
@@ -290,7 +290,12 @@ function exportExcel(trip){
 }
 
 phone.addEventListener("blur", function(){
-    if(clients[this.value]) fullName.value = clients[this.value];
+    const data = clients[this.value];
+    if(data){
+        fullName.value = data.fullName || "";
+        city.value = data.city || "";
+        branch.value = data.branch || "";
+    }
 });
 
 const fields = ["fullName","parcelNumber","phone","city","branch","places","volume","weight","price","note"];
