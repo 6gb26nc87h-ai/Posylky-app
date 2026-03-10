@@ -74,7 +74,6 @@ let trips = JSON.parse(localStorage.getItem("trips"))||[];
 let clients = JSON.parse(localStorage.getItem("clients"))||{};
 let userCities = JSON.parse(localStorage.getItem("userCities"))||[];
 let editId = null;
-let lastParcelNumber = Number(localStorage.getItem("lastParcelNumber")) || 600;
 
 const cities = ["Київ","Харків","Одеса","Дніпро","Львів","Запоріжжя","Вінниця","Полтава","Чернігів","Черкаси","Хмельницький","Житомир","Суми","Рівне","Івано-Франківськ","Тернопіль","Луцьк","Ужгород","Кропивницький","Миколаїв"];
 const citiesList = document.getElementById("citiesList");
@@ -148,13 +147,10 @@ function addParcel(){
     if(editId){
         parcels = parcels.map(p=>p.id===editId ? parcelData : p);
         editId = null;
-   } else {
-    parcels.push(parcelData);
+    } else {
+        parcels.push(parcelData);
+    }
 
-    lastParcelNumber++;
-    localStorage.setItem("lastParcelNumber", lastParcelNumber);
-    parcelNumber.value = lastParcelNumber;
-}
     autoSave();
     renderTables();
     clearInputs();
@@ -294,8 +290,6 @@ fields.forEach((id,index)=>{
 });
 
 renderTrips();
-parcelNumber.value = lastParcelNumber;
-    
 </script>
 </body>
 </html>
