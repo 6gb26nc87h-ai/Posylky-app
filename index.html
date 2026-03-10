@@ -120,12 +120,12 @@ function deleteTrip(){
 function addParcel(){
     const trip = tripSelect.value;
     if(!trip) return alert("Створіть рейс!");
-    
+
     const parcelData = {
         id: editId || Date.now(),
         trip,
         fullName: fullName.value,
-        number: parcelNumber.value,
+        number: parcelNumber.value,  // беремо поточне значення
         phone: phone.value,
         city: city.value,
         branch: branch.value,
@@ -148,23 +148,33 @@ function addParcel(){
         parcels = parcels.map(p=>p.id===editId ? parcelData : p);
         editId = null;
     } else {
-    parcels.push(parcelData);
+        parcels.push(parcelData);
 
-    let currentNumber = Number(parcelNumber.value);
-    if(!isNaN(currentNumber)){
-        currentNumber++;
-        parcelNumber.value = currentNumber;
+        // Інкрементуємо номер посилки на +1
+        let currentNumber = Number(parcelNumber.value);
+        if(!isNaN(currentNumber)){
+            parcelNumber.value = currentNumber + 1;
+        }
     }
-}
+
     autoSave();
     renderTables();
     clearInputs();
 }
 
 function clearInputs(){
-    document.querySelectorAll("input:not(#tripName)").forEach(i=>i.value="");
+    fullName.value="";
+    phone.value="";
+    city.value="";
+    branch.value="";
+    places.value="";
+    volume.value="";
+    weight.value="";
+    price.value="";
+    note.value="";
     document.getElementById("ourPayment").checked=false;
     document.getElementById("invoice").checked=false;
+    // **номер посилки не очищається**, він вже автоматично збільшився
 }
 
 function deleteParcel(id){
