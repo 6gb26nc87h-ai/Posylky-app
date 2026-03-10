@@ -148,9 +148,14 @@ function addParcel(){
         parcels = parcels.map(p=>p.id===editId ? parcelData : p);
         editId = null;
     } else {
-        parcels.push(parcelData);
-    }
+    parcels.push(parcelData);
 
+    let currentNumber = Number(parcelNumber.value);
+    if(!isNaN(currentNumber)){
+        currentNumber++;
+        parcelNumber.value = currentNumber;
+    }
+}
     autoSave();
     renderTables();
     clearInputs();
