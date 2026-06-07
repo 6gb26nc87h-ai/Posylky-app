@@ -1069,20 +1069,19 @@ function exportExcel(trip){
     const ws =
         XLSX.utils.json_to_sheet(data);
 
-    ws["!cols"] = [
-    {wch:30}, // ПІБ
-    {wch:14}, // Номер
-    {wch:18}, // Телефон
-    {wch:20}, // Місто
-    {wch:24}, // Відділення
-    {wch:10}, // Місця
-    {wch:12}, // Об'єм
-    {wch:12}, // Вага
-    {wch:12}, // Ціна
-    {wch:14}, // Наша оплата
-    {wch:14}, // Рахунок
-    {wch:24}  // Примітка
-];
+    ws["!cols"] = Object.keys(data[0]).map(key => ({
+
+    wch: Math.min(
+        Math.max(
+            key.length,
+            ...data.map(row =>
+                String(row[key] || "").length
+            )
+        ) + 2,
+        40
+    )
+
+}));
 
     ws["!pageSetup"] = {
 
