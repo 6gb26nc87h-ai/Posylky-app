@@ -96,16 +96,17 @@ table{
 
 th,
 td{
-    padding:6px;
-    font-size:12px;
+    padding:10px;
+    font-size:16px;
     text-align:center;
-    border-bottom:1px solid #eee;
+    border:1px solid #ccc;
 }
 
 th{
     background:#007aff;
     color:white;
-    font-size:13px;
+    font-size:17px;
+    font-weight:bold;
 }
 
 tr:hover{
@@ -1064,21 +1065,19 @@ function exportExcel(trip){
         XLSX.utils.json_to_sheet(data);
 
     ws["!cols"] = [
-
-        {wch:25},
-        {wch:12},
-        {wch:16},
-        {wch:18},
-        {wch:22},
-        {wch:8},
-        {wch:10},
-        {wch:10},
-        {wch:10},
-        {wch:12},
-        {wch:12},
-        {wch:20}
-
-    ];
+    {wch:30}, // ПІБ
+    {wch:14}, // Номер
+    {wch:18}, // Телефон
+    {wch:20}, // Місто
+    {wch:24}, // Відділення
+    {wch:10}, // Місця
+    {wch:12}, // Об'єм
+    {wch:12}, // Вага
+    {wch:12}, // Ціна
+    {wch:14}, // Наша оплата
+    {wch:14}, // Рахунок
+    {wch:24}  // Примітка
+];
 
     ws["!pageSetup"] = {
 
