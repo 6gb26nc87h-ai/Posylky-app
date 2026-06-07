@@ -747,12 +747,13 @@ function editParcel(id){
 
 function renderTrips(){
 
+    const currentTrip = tripSelect.value;
+
     tripSelect.innerHTML = "";
 
-    trips.forEach(trip => {
+    trips.forEach(trip=>{
 
-        const option =
-            document.createElement("option");
+        const option = document.createElement("option");
 
         option.value = trip;
 
@@ -763,6 +764,14 @@ function renderTrips(){
 
         tripSelect.appendChild(option);
     });
+
+    if(currentTrip && trips.includes(currentTrip)){
+        tripSelect.value = currentTrip;
+    }
+
+    updateTripStatus();
+    renderTables();
+}
 
     updateTripStatus();
 
