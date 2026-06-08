@@ -1044,91 +1044,90 @@ function renderTables(){
 </button>
                 <table>
 
-                    <tr>
-    <th></th>
-    <th>ПІБ</th>
-    <th>Номер</th>
-    <th>Телефон</th>
-    <th>Місто</th>
-    <th>Відділення</th>
-    <th>Місця</th>
-    <th>Об'єм</th>
-    <th>Вага</th>
-    <th>Ціна</th>
-    <th>Наша оплата</th>
-    <th>Рахунок</th>
-    <th>Примітка</th>
-    <th>Дії</th>
-</tr>
+                  <tr>
 
+    <th>Номер</th>
+
+    <th>ПІБ</th>
+
+    <th>Телефон</th>
+
+    <th>Місто</th>
+
+    <th>Відділення</th>
+
+    <th>Місця</th>
+
+    <th>Об'єм</th>
+
+    <th>Вага</th>
+
+    <th>Ціна</th>
+
+    <th>Наша оплата</th>
+
+    <th>Рахунок</th>
+
+    <th>Примітка</th>
+
+    <th>Дії</th>
+
+</tr>
                     ${tripParcels.map((p,index) => `
 
-    <tr>
+   <tr>
 
-        <td>${p.number}</td>
+    <td>${p.number}</td>
 
-        <td><strong>${p.fullName}</strong></td>
+    <td><strong>${p.fullName}</strong></td>
 
-                            <td>${p.phone}</td>
+    <td>${p.phone}</td>
 
-                            <td>${p.city}</td>
+    <td>${p.city}</td>
 
-                            <td>${p.branch}</td>
+    <td>${p.branch}</td>
 
-                            <td>${p.places}</td>
+    <td>${p.places}</td>
 
-                            <td>${p.volume}</td>
+    <td>${p.volume}</td>
 
-                            <td>${p.weight}</td>
+    <td>${p.weight}</td>
 
-                            <td>${p.price}</td>
+    <td>${p.price}</td>
 
-                            <td class="ourPaymentCell">
-                                ${p.ourPayment ? "✓" : ""}
-                            </td>
+    <td class="ourPaymentCell">
+        ${p.ourPayment ? "✓" : ""}
+    </td>
 
-                          <td class="invoiceCell">
-    ${p.invoice ? "✓" : ""}
-</td>
+    <td class="invoiceCell">
+        ${p.invoice ? "✓" : ""}
+    </td>
 
-<td>
-    ${p.note || ""}
-</td>
+    <td>
+        ${p.note || ""}
+    </td>
 
-<td>
+    <td>
 
-    <button
-        class="edit"
-                                    onclick="editParcel(${p.id})">
+        <button
+            class="edit"
+            onclick="editParcel(${p.id})">
 
-                                    ✎
+            ✎
 
-                                </button>
+        </button>
 
-                                <button
-                                    class="delete"
-                                    onclick="deleteParcel(${p.id})">
+        <button
+            class="delete"
+            onclick="deleteParcel(${p.id})">
 
-                                    X
+            X
 
-                                </button>
+        </button>
 
-                            </td>
+    </td>
 
-                        </tr>
-
-                    `).join("")}
-
-                </table>
-
-            </div>
-
-        `;
-
-        tables.appendChild(wrapper);
-
-    });
-}
+</tr>
 
 
 /* ===== ЗГОРТАННЯ ===== */
