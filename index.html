@@ -298,6 +298,30 @@ tr:hover{
         font-size:18px;
     }
 }
+@media print {
+
+    body > *{
+        display:none !important;
+    }
+
+    .printArea{
+        display:block !important;
+    }
+
+    .printArea table{
+        width:100% !important;
+        border-collapse:collapse;
+    }
+
+    .printArea th,
+    .printArea td{
+        border:1px solid #000 !important;
+        padding:6px !important;
+        font-size:12px !important;
+        color:black !important;
+        background:white !important;
+    }
+}
 </style>
 </head>
 
