@@ -91,37 +91,27 @@ button.openTrip{
 table{
     width:100%;
     border-collapse:collapse;
-    table-layout:fixed;
+    table-layout:auto;
 }
 
 th,
 td{
-    border:1px solid #444;
-    padding:6px;
-    font-size:14px;
-    vertical-align:middle;
-    word-wrap:break-word;
+    padding:10px;
+    font-size:16px;
+    text-align:center;
+    border:1px solid #ccc;
+
     white-space:normal;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    vertical-align:middle;
 }
 
 th{
-    background:white;
-    color:black;
-    font-size:15px;
+    background:#007aff;
+    color:white;
+    font-size:17px;
     font-weight:bold;
-    text-align:center;
-}
-
-td{
-    text-align:left;
-}
-td:nth-child(6),
-td:nth-child(13){
-    font-size:12px;
-}
-
-td:first-child{
-    text-align:center;
 }
 
 tr:hover{
@@ -316,6 +306,7 @@ JSON.parse(localStorage.getItem("clients")) || {};
 let userCities =
 JSON.parse(localStorage.getItem("userCities")) || [];
 
+/* НОВЕ */
 let tripStatuses =
 JSON.parse(localStorage.getItem("tripStatuses")) || {};
 
@@ -438,12 +429,6 @@ function createTrip(){
     tripStatuses[name] = "active";
 
     autoSave();
-    
-alert(
-    "Trips: " + trips.length +
-    "\nParcels: " + parcels.length
-);
-
 
     renderTrips();
 
@@ -933,9 +918,7 @@ function renderTables(){
 
                     <tr>
 
-                        <th>№</th>
-                         
-                         <th>ПІБ</th>
+                        <th>ПІБ</th>
 
                         <th>Номер</th>
 
@@ -961,12 +944,11 @@ function renderTables(){
 
                     </tr>
 
-                    ${tripParcels.map((p,index) => `
+                    ${tripParcels.map(p => `
 
                         <tr>
 
-                            <td>${index + 1}</td>
-                             <td><strong>${p.fullName}</strong></td>
+                            <td>${p.fullName}</td>
 
                             <td>${p.number}</td>
 
@@ -1096,21 +1078,20 @@ function exportExcel(trip){
     const ws =
         XLSX.utils.json_to_sheet(data);
 
-    ws["!cols"] = [
-    {wch:4},   // №
-    {wch:24},  // ПІБ
-    {wch:9},   // Номер
-    {wch:15},  // Телефон
-    {wch:28},  // Місто
-    {wch:24},  // Відділення
-    {wch:7},   // Місця
-    {wch:28},  // Об'єм
-    {wch:8},   // Вага
-    {wch:7},   // Ціна
-    {wch:12},  // Наша оплата
-    {wch:10},  // Рахунок
-    {wch:30}   // Примітка
-];
+    ws["!cols"] = Object.keys(data[0]).map(key => ({
+
+    wch: Math.min(
+        Math.max(
+            key.length,
+            ...data.map(row =>
+                String(row[key] || "").length
+            )
+        ) + 2,
+        40
+    )
+
+}));
+
     ws["!pageSetup"] = {
 
         orientation: "landscape",
