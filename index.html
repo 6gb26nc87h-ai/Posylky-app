@@ -918,38 +918,30 @@ function renderTables(){
                 <table>
 
                     <tr>
-
-                        <th>ПІБ</th>
-
-                        <th>Номер</th>
-
-                        <th>Телефон</th>
-
-                        <th>Місто</th>
-
-                        <th>Відділення</th>
-
-                        <th>Місця</th>
-
-                        <th>Об'єм</th>
-
-                        <th>Вага</th>
-
-                        <th>Ціна</th>
-
-                        <th>Наша</th>
-
-                        <th>Рахунок</th>
-
-                        <th>Дії</th>
-
-                    </tr>
+    <th></th>
+    <th>ПІБ</th>
+    <th>Номер</th>
+    <th>Телефон</th>
+    <th>Місто</th>
+    <th>Відділення</th>
+    <th>Місця</th>
+    <th>Об'єм</th>
+    <th>Вага</th>
+    <th>Ціна</th>
+    <th>Наша оплата</th>
+    <th>Рахунок</th>
+    <th>Дії</th>
+</tr>
 
                     ${tripParcels.map(p => `
 
                         <tr>
 
-                            <td>${p.fullName}</td>
+                            <tr>
+
+    <td>${index + 1}</td>
+
+    <td><strong>${p.fullName}</strong></td>
 
                             <td>${p.number}</td>
 
