@@ -933,17 +933,15 @@ function renderTables(){
     <th>Дії</th>
 </tr>
 
-                    ${tripParcels.map(p => `
+                    ${tripParcels.map((p,index) => `
 
-                        <tr>
+    <tr>
 
-                            <tr>
+        <td>${index + 1}</td>
 
-    <td>${index + 1}</td>
+        <td><strong>${p.fullName}</strong></td>
 
-    <td><strong>${p.fullName}</strong></td>
-
-                            <td>${p.number}</td>
+        <td>${p.number}</td>
 
                             <td>${p.phone}</td>
 
