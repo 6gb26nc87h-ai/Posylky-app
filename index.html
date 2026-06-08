@@ -1150,10 +1150,13 @@ function printTrip(button){
         button.closest(".tableContent");
 
     const table =
-        tableContent.querySelector("table");
+    tableContent.querySelector("table").cloneNode(true);
 
-    const printWindow =
-        window.open("", "_blank");
+table.querySelectorAll("tr").forEach(row => {
+    if(row.cells.length){
+        row.deleteCell(row.cells.length - 1);
+    }
+});
 
     printWindow.document.write(`
         <html>
@@ -1191,7 +1194,10 @@ function printTrip(button){
 
         <body>
 
-            ${table.outerHTML}
+           ${table.outerHTML.replace(
+    /<th>Дії<\/th>[\s\S]*?<\/td>/g,
+    ""
+)}
 
         </body>
 
