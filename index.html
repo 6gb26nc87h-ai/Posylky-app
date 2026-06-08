@@ -1087,16 +1087,18 @@ function renderTables(){
                                 ${p.ourPayment ? "✓" : ""}
                             </td>
 
-                            <td class="invoiceCell">
-                                ${p.invoice ? "✓" : ""}
-                            </td>
-                            
-                            <td>${p.note || ""}</td>
+                          <td class="invoiceCell">
+    ${p.invoice ? "✓" : ""}
+</td>
 
-                            <td>
+<td>
+    ${p.note || ""}
+</td>
 
-                                <button
-                                    class="edit"
+<td>
+
+    <button
+        class="edit"
                                     onclick="editParcel(${p.id})">
 
                                     ✎
