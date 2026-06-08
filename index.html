@@ -1371,17 +1371,7 @@ fields.forEach((id,index)=>{
         );
 });
 
-function printTrip(button){
 
-    const tableContent =
-        button.closest(".tableContent");
-
-    tableContent.classList.add("printOnly");
-
-    window.print();
-
-    tableContent.classList.remove("printOnly");
-}
 /* ===== ЗАПУСК ===== */
 
 renderTrips();
