@@ -253,8 +253,12 @@ tr:hover{
     }
 
     .tableContent{
-        display:block !important;
-    }
+    display:none !important;
+}
+
+.tableContent.printing{
+    display:block !important;
+}
 
     table{
         width:100%;
@@ -1113,27 +1117,17 @@ function toggleTable(header){
 
 function printTrip(button){
 
-    const wrapper =
-        button.closest(".tableContent");
+    const wrapper = button.closest(".tableContent");
 
-    const allTables =
-        document.querySelectorAll(".tableContent");
+    document
+        .querySelectorAll(".tableContent")
+        .forEach(el => el.classList.remove("printing"));
 
-    allTables.forEach(table => {
-
-        if(table !== wrapper){
-            table.style.display = "none";
-        }
-
-    });
-
-    wrapper.style.display = "block";
+    wrapper.classList.add("printing");
 
     window.print();
 
-    allTables.forEach(table => {
-        table.style.display = "none";
-    });
+    wrapper.classList.remove("printing");
 }
 /* ===== EXCEL A4 ===== */
 
