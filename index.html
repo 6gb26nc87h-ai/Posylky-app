@@ -1146,17 +1146,20 @@ function toggleTable(header){
 
 function printTrip(button){
 
-    const wrapper = button.closest(".tableContent");
+    const tableContent =
+        button.closest(".tableContent");
 
-    document
-        .querySelectorAll(".tableContent")
-        .forEach(el => el.classList.remove("printing"));
+    tableContent.classList.add("printOnly");
 
-    wrapper.classList.add("printing");
+    setTimeout(() => {
 
-    window.print();
+        window.print();
 
-    wrapper.classList.remove("printing");
+        setTimeout(() => {
+            tableContent.classList.remove("printOnly");
+        }, 500);
+
+    }, 300);
 }
 /* ===== EXCEL A4 ===== */
 
