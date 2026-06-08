@@ -1160,6 +1160,16 @@ function toggleTable(header){
 
 function printTrip(button){
 
+if (window.navigator.standalone) {
+
+    alert(
+        "Для друку відкрийте цей сайт у Safari.\n\n" +
+        "У вебдодатку iPhone друк обмежений."
+    );
+
+    return;
+}
+
     const tableContent =
         button.closest(".tableContent");
 
