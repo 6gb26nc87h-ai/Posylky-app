@@ -304,17 +304,22 @@ tr:hover{
         display:none !important;
     }
 
-    .printArea{
+    .printOnly{
         display:block !important;
     }
 
-    .printArea table{
+    .printOnly button,
+    .printOnly .tripHeader{
+        display:none !important;
+    }
+
+    .printOnly table{
         width:100% !important;
         border-collapse:collapse;
     }
 
-    .printArea th,
-    .printArea td{
+    .printOnly th,
+    .printOnly td{
         border:1px solid #000 !important;
         padding:6px !important;
         font-size:12px !important;
@@ -1324,7 +1329,17 @@ fields.forEach((id,index)=>{
         );
 });
 
+function printTrip(button){
 
+    const tableContent =
+        button.closest(".tableContent");
+
+    tableContent.classList.add("printOnly");
+
+    window.print();
+
+    tableContent.classList.remove("printOnly");
+}
 /* ===== ЗАПУСК ===== */
 
 renderTrips();
