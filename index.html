@@ -1111,7 +1111,30 @@ function toggleTable(header){
         : "none";
 }
 
+function printTrip(button){
 
+    const wrapper =
+        button.closest(".tableContent");
+
+    const allTables =
+        document.querySelectorAll(".tableContent");
+
+    allTables.forEach(table => {
+
+        if(table !== wrapper){
+            table.style.display = "none";
+        }
+
+    });
+
+    wrapper.style.display = "block";
+
+    window.print();
+
+    allTables.forEach(table => {
+        table.style.display = "none";
+    });
+}
 /* ===== EXCEL A4 ===== */
 
 function exportExcel(trip){
