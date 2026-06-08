@@ -219,6 +219,71 @@ tr:hover{
         padding:8px;
     }
 
+@media print{
+
+    body{
+        background:white;
+        padding:0;
+    }
+
+    h2,
+    input,
+    select,
+    button,
+    #tripStatus{
+        display:none !important;
+    }
+
+    .table-wrapper{
+        box-shadow:none;
+        border-radius:0;
+        padding:0;
+        margin:0;
+        overflow:visible;
+    }
+
+    .tripHeader{
+        background:white !important;
+        color:black;
+        border:none;
+        margin:0 0 10px 0;
+        padding:6px 0;
+        font-size:18px;
+        font-weight:bold;
+    }
+
+    .tableContent{
+        display:block !important;
+    }
+
+    table{
+        width:100%;
+        min-width:100%;
+        table-layout:fixed;
+    }
+
+    th,
+    td{
+        font-size:11px;
+        border:1px solid #000;
+        padding:4px;
+        color:#000;
+    }
+
+    th{
+        background:white !important;
+    }
+
+    td:last-child,
+    th:last-child{
+        display:none;
+    }
+
+    tr{
+        page-break-inside:avoid;
+    }
+
+}
     th,
     td{
         font-size:11px;
