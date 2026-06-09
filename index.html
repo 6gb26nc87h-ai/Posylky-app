@@ -1806,10 +1806,24 @@ function importBackup(event){
 
             parcels = backup.parcels;
 
-            localStorage.setItem(
-                "parcels",
-                JSON.stringify(parcels)
-            );
+// Відновлюємо список рейсів із посилок
+trips = [...new Set(
+    parcels
+        .map(p => String(p.trip || "").trim())
+        .filter(t => t !== "")
+)];
+
+trips.sort((a, b) => Number(a) - Number(b));
+
+localStorage.setItem(
+    "parcels",
+    JSON.stringify(parcels)
+);
+
+localStorage.setItem(
+    "trips",
+    JSON.stringify(trips)
+);
 
             renderTrips();
 
