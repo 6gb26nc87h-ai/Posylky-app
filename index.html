@@ -1435,7 +1435,7 @@ async function saveTripAsImages(trip){
         container.style.top = "0";
         container.style.background = "#fff";
         container.style.padding = "20px";
-        container.style.width = "1600px";
+        container.style.width = "1900px";
 
         container.innerHTML = `
             <div style="font-family:Arial,sans-serif;">
@@ -1653,8 +1653,8 @@ async function saveTripAsImages(trip){
     width:150px;
     min-width:150px;
     max-width:150px;
-    white-space:normal;
-    overflow-wrap:break-word;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
     word-break:break-word;
     line-height:1.2;
 ">
@@ -1673,9 +1673,11 @@ async function saveTripAsImages(trip){
         document.body.appendChild(container);
 
         const canvas = await html2canvas(container,{
-            scale:2,
-            backgroundColor:"#ffffff"
-        });
+    scale:2,
+    backgroundColor:"#ffffff",
+    width: container.scrollWidth,
+    height: container.scrollHeight
+});
 
         document.body.removeChild(container);
 
