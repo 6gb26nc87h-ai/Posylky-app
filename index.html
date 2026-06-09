@@ -1746,6 +1746,38 @@ async function saveTripAsImages(trip){
 
 /* ===== ЗАПУСК ===== */
 
+...
+}
+
+function backupData(){
+
+    const data = {
+        parcels: parcels,
+        exportDate: new Date().toISOString(),
+        version: "1.0"
+    };
+
+    const blob = new Blob(
+        [JSON.stringify(data, null, 2)],
+        { type: "application/json" }
+    );
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+
+    link.download =
+        `Backup_${new Date().toISOString().slice(0,10)}.json`;
+
+    link.click();
+
+    URL.revokeObjectURL(link.href);
+
+    alert("Резервну копію збережено.");
+}
+
+renderTrips();
+
 renderTrips();
 
 </script>
