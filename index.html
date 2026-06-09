@@ -7,6 +7,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
@@ -1416,6 +1418,8 @@ async function saveTripAsImages(trip){
     }
 
     const rowsPerPage = 30;
+    
+    const images = [];
 
     for(let page = 0; page < Math.ceil(tripParcels.length / rowsPerPage); page++){
 
@@ -1549,21 +1553,52 @@ async function saveTripAsImages(trip){
 
         document.body.removeChild(container);
 
-        const link = document.createElement("a");
-
-        link.download =
-            `Рейс_${trip}_${page + 1}.png`;
-
-        link.href = canvas.toDataURL("image/png");
-
-        link.click();
+        images.push(canvas.toDataURL("image/png"));
     }
 
+    if(images.length === 1){
+
+    const link = document.createElement("a");
+
+    link.href = images[0];
+
+    link.download = `Рейс_${trip}_1.png`;
+
+    link.click();
+
+    alert("PNG збережено.");
+
+}else{
+
+    const zip = new JSZip();
+
+    images.forEach((img,index)=>{
+
+        zip.file(
+            `Рейс_${trip}_${index + 1}.png`,
+            img.split(",")[1],
+            {base64:true}
+        );
+
+    });
+
+    const content = await zip.generateAsync({
+        type:"blob"
+    });
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(content);
+
+    link.download = `Рейс_${trip}.zip`;
+
+    link.click();
+
     alert(
-        `Готово!\n\nСтворено ${
-            Math.ceil(tripParcels.length / rowsPerPage)
-        } PNG-файл(ів).`
+        `ZIP створено.\n\nВсередині ${images.length} PNG.`
     );
+
+}
 }
 
 /* ===== ЗАПУСК ===== */
