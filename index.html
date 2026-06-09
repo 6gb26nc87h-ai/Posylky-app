@@ -1505,7 +1505,15 @@ async function saveTripAsImages(trip){
 
 <th style="border:1px solid #000;padding:5px;min-width:50px;">Рахунок</th>
 
-<th style="border:1px solid #000;padding:5px;">Примітка</th>
+<th style="
+    border:1px solid #000;
+    padding:5px;
+    width:150px;
+    min-width:150px;
+    max-width:150px;
+">
+    Примітка
+</th>
 
                     </tr>
 
@@ -1594,9 +1602,19 @@ async function saveTripAsImages(trip){
                                 ${p.invoice ? "✓" : ""}
                             </td>
 
-                            <td style="border:1px solid #000;padding:5px;">
-                                ${p.note || ""}
-                            </td>
+                            <td style="
+    border:1px solid #000;
+    padding:5px;
+    width:150px;
+    min-width:150px;
+    max-width:150px;
+    white-space:normal;
+    overflow-wrap:break-word;
+    word-break:break-word;
+    line-height:1.2;
+">
+    ${p.note || ""}
+</td>
 
                         </tr>
 
