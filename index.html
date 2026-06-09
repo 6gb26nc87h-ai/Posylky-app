@@ -1749,10 +1749,12 @@ async function saveTripAsImages(trip){
 function backupData(){
 
     const data = {
-        parcels: parcels,
-        exportDate: new Date().toISOString(),
-        version: "1.0"
-    };
+    parcels: parcels,
+    trips: trips,
+    clients: clients,
+    exportDate: new Date().toISOString(),
+    version: "2.0"
+};
 
     const blob = new Blob(
         [JSON.stringify(data, null, 2)],
