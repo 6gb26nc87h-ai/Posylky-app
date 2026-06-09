@@ -1039,6 +1039,21 @@ function renderTables(){
 
                 </button>
 
+<button onclick="backupData()">
+    💾 Резервна копія
+</button>
+
+<button onclick="restoreData()">
+    ♻️ Відновити
+</button>
+
+<input
+    type="file"
+    id="restoreFile"
+    accept=".json"
+    style="display:none"
+    onchange="importBackup(event)">
+
 <button
     class="export"
     onclick="saveTripAsImages('${trip}')">
