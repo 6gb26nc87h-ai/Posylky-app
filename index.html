@@ -1459,7 +1459,13 @@ async function saveTripAsImages(trip){
 
                         <th style="border:1px solid #000;padding:5px;min-width:80px;">Номер</th>
 
-<th style="border:1px solid #000;padding:5px;">ПІБ</th>
+<th style="
+    border:1px solid #000;
+    padding:5px;
+    width:150px;
+">
+    ПІБ
+</th>
 
 <th style="border:1px solid #000;padding:5px;width:100px;">Телефон</th>
 
@@ -1511,9 +1517,18 @@ async function saveTripAsImages(trip){
                                 ${p.number || ""}
                             </td>
 
-                            <td style="border:1px solid #000;padding:5px;">
-                                ${p.fullName || ""}
-                            </td>
+                            <td style="
+    border:1px solid #000;
+    padding:5px;
+    width:150px;
+    max-width:150px;
+    white-space:normal;
+    overflow-wrap:break-word;
+    word-break:break-word;
+    line-height:1.2;
+">
+    ${p.fullName || ""}
+</td>
 
                             <td style="border:1px solid #000;padding:5px;">
                                 ${p.phone || ""}
