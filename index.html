@@ -1777,6 +1777,61 @@ function restoreData(){
     document.getElementById("restoreFile").click();
 }
 
+function importBackup(event){
+
+    const file = event.target.files[0];
+
+    if(!file) return;
+
+    const confirmRestore = confirm(
+        "Увага!\n\nВсі поточні дані будуть замінені резервною копією.\n\nПродовжити?"
+    );
+
+    if(!confirmRestore){
+        event.target.value = "";
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        try{
+
+            const backup = JSON.parse(e.target.result);
+
+            if(!backup.parcels || !Array.isArray(backup.parcels)){
+                throw new Error();
+            }
+
+            parcels = backup.parcels;
+
+            localStorage.setItem(
+                "parcels",
+                JSON.stringify(parcels)
+            );
+
+            renderTrips();
+
+            alert(
+                `Успішно відновлено ${parcels.length} посилок.`
+            );
+
+        }catch(error){
+
+            alert(
+                "Помилка. Невірний файл резервної копії."
+            );
+
+        }
+
+    };
+
+    reader.readAsText(file);
+
+    event.target.value = "";
+}
+
 renderTrips();
 
 </script>
