@@ -949,10 +949,15 @@ function renderTables(){
 
     trips.forEach(trip => {
 
-        const tripParcels =
-            parcels.filter(
-                p => p.trip === trip
-            );
+        const tripParcels = parcels
+    .filter(p => p.trip === trip)
+    .sort((a, b) => {
+
+        const numA = parseInt(a.number) || 0;
+        const numB = parseInt(b.number) || 0;
+
+        return numA - numB;
+    });
 
         if(!tripParcels.length){
             return;
@@ -1422,10 +1427,18 @@ fields.forEach((id,index)=>{
 
 async function saveTripAsImages(trip){
 
-    const tripParcels = parcels.filter(
-    p => p.trip === trip &&
-         (p.fullName || p.phone || p.number)
-);
+    const tripParcels = parcels
+    .filter(
+        p => p.trip === trip &&
+             (p.fullName || p.phone || p.number)
+    )
+    .sort((a, b) => {
+
+        const numA = parseInt(a.number) || 0;
+        const numB = parseInt(b.number) || 0;
+
+        return numA - numB;
+    });
 
     if(!tripParcels.length){
         alert("У цьому рейсі немає посилок.");
