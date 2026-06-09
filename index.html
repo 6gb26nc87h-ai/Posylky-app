@@ -1766,7 +1766,7 @@ function backupData(){
     trips: trips,
     clients: clients,
     exportDate: new Date().toISOString(),
-    version: "2.0"
+    version: "3.0"
 };
 
     const blob = new Blob(
@@ -1821,14 +1821,17 @@ function importBackup(event){
 
             parcels = backup.parcels;
 
-// Відновлюємо список рейсів із посилок
-trips = [...new Set(
+// Відновлюємо список рейсів
+trips = backup.trips || [...new Set(
     parcels
         .map(p => String(p.trip || "").trim())
         .filter(t => t !== "")
 )];
 
 trips.sort((a, b) => Number(a) - Number(b));
+
+// Відновлюємо базу клієнтів
+clients = backup.clients || {};
 
 localStorage.setItem(
     "parcels",
@@ -1838,6 +1841,11 @@ localStorage.setItem(
 localStorage.setItem(
     "trips",
     JSON.stringify(trips)
+);
+
+localStorage.setItem(
+    "clients",
+    JSON.stringify(clients)
 );
 
             renderTrips();
